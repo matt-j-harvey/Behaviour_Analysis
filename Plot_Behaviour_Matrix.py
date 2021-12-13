@@ -81,9 +81,10 @@ def plot_behaviour_maxtrix(base_directory, behaviour_matrix, onsets_dictioanry, 
                 axis_1.scatter(3000 - (trial_onset - onset), scatter_y, s=scatter_size, c='tab:orange')
 
         # Plot Block Boundaries
+        """
         if trial_onset in block_boundaries or irrel_onset in block_boundaries:
             axis_1.axhline(y=patch_y + 1, c='k')
-
+        """
         # Plot Selected Onsets
         if trial in selected_trials[0]: axis_1.scatter(2950, scatter_y, s=scatter_size, c='tab:purple')
         if trial in selected_trials[1]: axis_1.scatter(2950, scatter_y, s=scatter_size, c='tab:purple')
@@ -106,3 +107,5 @@ def plot_behaviour_maxtrix(base_directory, behaviour_matrix, onsets_dictioanry, 
     plt.savefig(base_directory + "/Session_Behaviour.png")
     plt.close()
     plt.show()
+
+
