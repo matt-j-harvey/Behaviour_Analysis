@@ -43,7 +43,6 @@ def get_ai_filename(base_directory):
 
         if len(h5_file) == 2 and h5_file[0].isnumeric() and h5_file[1].isnumeric():
             ai_filename = "/" + original_filename
-            print("Ai filename is: ", ai_filename)
             return ai_filename
 
 
@@ -56,8 +55,6 @@ def load_ai_recorder_file(ai_recorder_file_location):
     number_of_seconds = np.shape(data)[0]
     number_of_channels = np.shape(data)[1]
     sampling_rate = np.shape(data)[2]
-
-    print("Number of seconds", number_of_seconds)
 
     data_matrix = np.zeros((number_of_channels, number_of_seconds * sampling_rate))
 
@@ -191,11 +188,15 @@ def get_offset(onset, stream, threshold=0.5):
     count = 0
     on = True
     while on:
-        if stream[onset + count] < threshold and count > 10:
-            on = False
-            return onset + count
+        if onset + count < len(stream):
+            if stream[onset + count] < threshold and count > 10:
+                on = False
+                return onset + count
+            else:
+                count += 1
+
         else:
-            count += 1
+            return np.nan
 
 
 
@@ -227,9 +228,10 @@ def get_frame_indexes(frame_stream):
 
 
 
-def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0.13):
+def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0.13, visualise_lick_threshold=True):
 
     # Load AI Data
+    print("AI filename", ai_filename)
     ai_data = load_ai_recorder_file(base_directory + ai_filename)
 
     # Create Stimuli Dictionary
@@ -248,6 +250,14 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
     end_trace = ai_data[stimuli_dictionary["Trial End"]]
     mousecam_trace = ai_data[stimuli_dictionary["Mousecam"]]
     photodiode_trace = ai_data[stimuli_dictionary["Photodiode"]]
+
+    if visualise_lick_threshold:
+        plt.plot(lick_trace)
+        plt.axhline(lick_threshold, c='k')
+        split_directory = base_directory.split('/')
+        session_name = split_directory[-2] + "_" + split_directory[-1]
+        plt.title(session_name)
+        plt.show()
 
     # Create Some Combined Traces
     combined_odour_trace  = np.max([odour_1_trace, odour_2_trace], axis=0)
@@ -679,29 +689,32 @@ def get_nearest_frame(stimuli_onsets, frame_times):
     nearest_frames = []
     window_size = 50
 
-    for onset in stimuli_onsets:
-        smallest_distance = 1000
-        closest_frame = None
+    if len(stimuli_onsets) > 0:
 
-        window_start = int(onset - window_size)
-        window_stop  = int(onset + window_size)
+        print("Stimuli Onsets", stimuli_onsets)
+        for onset in stimuli_onsets:
+            smallest_distance = 1000
+            closest_frame = None
 
-        for timepoint in range(window_start, window_stop):
+            window_start = int(onset - window_size)
+            window_stop  = int(onset + window_size)
 
-            #There is a frame at this time
-            if timepoint in frame_times:
-                distance = abs(onset - timepoint)
+            for timepoint in range(window_start, window_stop):
 
-                if distance < smallest_distance:
-                    smallest_distance = distance
-                    closest_frame = frame_times.index(timepoint)
-                    #closest_frame = frame_onsets[timepoint]
+                #There is a frame at this time
+                if timepoint in frame_times:
+                    distance = abs(onset - timepoint)
 
-        if closest_frame != None:
-            if closest_frame > 11:
-                nearest_frames.append(closest_frame)
+                    if distance < smallest_distance:
+                        smallest_distance = distance
+                        closest_frame = frame_times.index(timepoint)
+                        #closest_frame = frame_onsets[timepoint]
 
-    nearest_frames = np.array(nearest_frames)
+            if closest_frame != None:
+                if closest_frame > 11:
+                    nearest_frames.append(closest_frame)
+
+        nearest_frames = np.array(nearest_frames)
     return nearest_frames
 
 
@@ -743,6 +756,8 @@ def save_onsets(base_directory, behaviour_matrix, selected_trials, onsets_dictio
     odour_2_cued                            = selected_trials[8]
     odour_1_not_cued                        = selected_trials[9]
     odour_2_not_cued                        = selected_trials[10]
+    miss_transition_trials                  = selected_trials[11]
+    odour_expected_absent_trials            = selected_trials[12]
 
     # Get Stimuli Times For Each Trial Cateogry
     visual_context_stable_vis_1_times      = get_times_from_behaviour_matrix(behaviour_matrix, visual_context_stable_vis_1_trials,    16) #11
@@ -756,6 +771,8 @@ def save_onsets(base_directory, behaviour_matrix, selected_trials, onsets_dictio
     odour_2_cued_times                     = get_times_from_behaviour_matrix(behaviour_matrix, odour_2_cued,                          11) #11
     odour_1_not_cued_times                 = get_times_from_behaviour_matrix(behaviour_matrix, odour_1_not_cued,                      11) #11
     odour_2_not_cued_times                 = get_times_from_behaviour_matrix(behaviour_matrix, odour_2_not_cued,                      11) #11
+    miss_transition_times                  = get_times_from_behaviour_matrix(behaviour_matrix, miss_transition_trials,                17) #11
+    odour_expected_absent_times            = get_times_from_behaviour_matrix(behaviour_matrix, odour_expected_absent_trials,          17) #11
 
     # Load Frame Onsets
     frame_onsets = onsets_dictionary['frame_onsets']
@@ -772,6 +789,8 @@ def save_onsets(base_directory, behaviour_matrix, selected_trials, onsets_dictio
     odour_2_cued_onsets                     = get_nearest_frame(odour_2_cued_times,                     frame_onsets)
     odour_1_not_cued_onsets                 = get_nearest_frame(odour_1_not_cued_times,                 frame_onsets)
     odour_2_not_cued_onsets                 = get_nearest_frame(odour_2_not_cued_times,                 frame_onsets)
+    miss_transition_onsets                  = get_nearest_frame(miss_transition_times,                  frame_onsets)
+    odour_expected_absent_onsets            = get_nearest_frame(odour_expected_absent_times,            frame_onsets)
 
     # Save Onsets
     np.save(os.path.join(save_directory, "visual_context_stable_vis_1_onsets.npy"),     visual_context_stable_vis_1_onsets)
@@ -779,12 +798,15 @@ def save_onsets(base_directory, behaviour_matrix, selected_trials, onsets_dictio
     np.save(os.path.join(save_directory, "odour_context_stable_vis_1_onsets.npy"),      odour_context_stable_vis_1_onsets)
     np.save(os.path.join(save_directory, "odour_context_stable_vis_2_onsets.npy"),      odour_context_stable_vis_2_onsets)
     np.save(os.path.join(save_directory, "perfect_transition_onsets.npy"),              perfect_transition_onsets)
+    np.save(os.path.join(save_directory, "odour_expected_absent_onsets.npy"),           odour_expected_absent_onsets)
     np.save(os.path.join(save_directory, "odour_expected_present_onsets.npy"),          odour_expected_present_onsets)
     np.save(os.path.join(save_directory, "odour_not_expected_not_present_onsets.npy"),  odour_not_expected_not_present_onsets)
     np.save(os.path.join(save_directory, "odour_1_cued_onsets.npy"),                    odour_1_cued_onsets)
     np.save(os.path.join(save_directory, "odour_2_cued_onsets.npy"),                    odour_2_cued_onsets)
     np.save(os.path.join(save_directory, "odour_1_not_cued_onsets.npy"),                odour_1_not_cued_onsets)
     np.save(os.path.join(save_directory, "odour_2_not_cued_onsets.npy"),                odour_2_not_cued_onsets)
+    np.save(os.path.join(save_directory, "missed_transition_onsets.npy"),               miss_transition_onsets)
+
 
 
 def get_selected_trials(behaviour_matrix):
@@ -796,18 +818,19 @@ def get_selected_trials(behaviour_matrix):
     Visual_Context_Vis_1_Stable - correct, in stable block, not first in block, ignored irrel
     Odour_Context_Vis_2_Stable - correct, in stable block, not first in block, ignored irrel
 
-
     Absence of Expected Odour
     Perfect Switch Trials  – first in visual block, vis 1 irrel, miss, next trial correct
     Odour_Expected_Present – Odour 2, correct, preceeded by irrel, ignore irrel
     Odour_Not_Expected_Absent – visual block, end of vis 2, correct,
-
+    Odour_Expected_Absent - first in visual block, vis 1, miss
 
     Cued v Non-Cued Odour
     odour_1_cued - Odour 1 - correct - in stable block - preceeded by irrel
     odour_2_cued - Odour 2 - correct - in stable block - preceeded by irrel
     odour_1_not_cued - Odour 2 - correct - in stable block - not preceeded by irrel
     odour_2_not_cued - Odour 2 - correct - in stable block - not preceeded by irrel
+
+    miss_switch_trials - first in visual block, vis 1 irrel, miss, next trial incorrect
     """
 
     # Get Selected Trials
@@ -817,13 +840,17 @@ def get_selected_trials(behaviour_matrix):
     odour_context_stable_vis_2_trials = []
 
     perfect_transition_trials = []
+    odour_expected_absent_trials = []
     odour_expected_present_trials = []
     odour_not_expected_not_present_trials = []
+    miss_transition_trials = []
 
     odour_1_cued = []
     odour_2_cued = []
     odour_1_not_cued = []
     odour_2_not_cued = []
+
+    first_in_block_list = []
 
     number_of_trials = np.shape(behaviour_matrix)[0]
 
@@ -852,16 +879,29 @@ def get_selected_trials(behaviour_matrix):
                 elif irrel_type == 2:
                     odour_context_stable_vis_2_trials.append(trial_index)
 
+
         # Check If Trial is A Perfect Transition Trial
         # visual block - vi 1
         # first in block
         # miss
         # next trial correct
-
         if trial_type == 1 and first_in_block:
-            following_trial_correct = behaviour_matrix[trial_index + 1][3]
-            if not trial_is_correct and following_trial_correct:
-                perfect_transition_trials.append(trial_index)
+
+            if trial_index < number_of_trials-1:
+
+                following_trial_correct = behaviour_matrix[trial_index + 1][3]
+
+                if not trial_is_correct:
+
+                    odour_expected_absent_trials.append(trial_index)
+
+                    if following_trial_correct:
+                        perfect_transition_trials.append(trial_index)
+
+                    if not following_trial_correct:
+                        miss_transition_trials.append(trial_index)
+
+
 
         # Check If Is Odour Expected, Present
         # Odour 2, correct, stable, preceeded by irrel, ignore irrel, not first in block
@@ -901,7 +941,10 @@ def get_selected_trials(behaviour_matrix):
                             odour_1_cued,
                             odour_2_cued,
                             odour_1_not_cued,
-                            odour_2_not_cued]
+                            odour_2_not_cued,
+
+                            miss_transition_trials,
+                            odour_expected_absent_trials]
 
     return selected_trials_list
 
@@ -938,10 +981,14 @@ def get_step_onsets_photodiode(trace, threshold=1, window=10):
 
 
 
-def create_behaviour_matrix(base_directory, lick_threshold=0.13):
+def create_behaviour_matrix(base_directory, behaviour_only=False):
 
     # Get AI Filename
     ai_filename = get_ai_filename(base_directory)
+
+    # Load Lick Threshold
+    lick_threshold = np.load(os.path.join(base_directory, "Lick_Threshold.npy"))
+    print("Lick Threshold : ", lick_threshold)
 
     # Create Save Directory
     save_directory = os.path.join(base_directory, "Stimuli_Onsets")
@@ -949,7 +996,7 @@ def create_behaviour_matrix(base_directory, lick_threshold=0.13):
         os.mkdir(save_directory)
 
     # Get Trace and Onsets Dictionary
-    onsets_dictionary, traces_dictionary = extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=lick_threshold)
+    onsets_dictionary, traces_dictionary = extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=lick_threshold, visualise_lick_threshold=False)
 
     # Create Trial Onsets List
     vis_context_vis_1_onsets = onsets_dictionary["vis_context_vis_1_onsets"]
@@ -986,9 +1033,26 @@ def create_behaviour_matrix(base_directory, lick_threshold=0.13):
     photodiode_onsets = onsets_dictionary['photodiode_onsets']
 
     # Save Trials
-    save_onsets(base_directory, trial_matrix, selected_trials, onsets_dictionary, save_directory, photodiode_onsets)
+    if not behaviour_only:
+        save_onsets(base_directory, trial_matrix, selected_trials, onsets_dictionary, save_directory, photodiode_onsets)
 
     # Plot Behaviour Matrix
     Plot_Behaviour_Matrix.plot_behaviour_maxtrix(base_directory, trial_matrix, onsets_dictionary, block_boundaries, stable_windows, selected_trials)
+
+    # Save Behaviour Matrix
+    np.save(os.path.join(save_directory, "Behaviour_Matrix.npy"), trial_matrix)
+
+
+
+
+session_list = []
+
+for session in session_list:
+    create_behaviour_matrix(session)
+
+
+
+
+
 
 
