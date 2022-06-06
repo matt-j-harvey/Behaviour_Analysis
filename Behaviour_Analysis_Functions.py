@@ -41,25 +41,35 @@ def extreme_value_corrections(selected_value, number_of_trials):
 
 def calculate_d_prime(hits, misses, false_alarms, correct_rejections):
 
+    print("Hits", hits)
+    print("Misses", misses)
+    print("False Alarms", false_alarms)
+    print("Correct Rejections", correct_rejections)
+
     # Calculate Hit Rates and False Alarm Rates
     number_of_rewarded_trials = hits + misses
     number_of_unrewarded_trials = false_alarms + correct_rejections
-    hit_rate = float(hits) / number_of_rewarded_trials
-    false_alarm_rate = float(false_alarms) / number_of_unrewarded_trials
 
-    # Ensure Either Value Does Not Equal Zero or One
-    hit_rate = extreme_value_corrections(hit_rate, number_of_rewarded_trials)
-    false_alarm_rate = extreme_value_corrections(false_alarm_rate, number_of_unrewarded_trials)
+    if number_of_unrewarded_trials == 0 or number_of_rewarded_trials == 0:
+        return np.nan
+    else:
 
-    # Get The Standard Normal Distribution
-    Z = norm.ppf
+        hit_rate = float(hits) / number_of_rewarded_trials
+        false_alarm_rate = float(false_alarms) / number_of_unrewarded_trials
 
-    # Z Transform Both The Hit Rates And The False Alarm Rates
-    hit_rate_z_transform = Z(hit_rate)
-    false_alarm_rate_z_transform = Z(false_alarm_rate)
+        # Ensure Either Value Does Not Equal Zero or One
+        hit_rate = extreme_value_corrections(hit_rate, number_of_rewarded_trials)
+        false_alarm_rate = extreme_value_corrections(false_alarm_rate, number_of_unrewarded_trials)
 
-    # Calculate D Prime
-    d_prime = hit_rate_z_transform - false_alarm_rate_z_transform
+        # Get The Standard Normal Distribution
+        Z = norm.ppf
+
+        # Z Transform Both The Hit Rates And The False Alarm Rates
+        hit_rate_z_transform = Z(hit_rate)
+        false_alarm_rate_z_transform = Z(false_alarm_rate)
+
+        # Calculate D Prime
+        d_prime = hit_rate_z_transform - false_alarm_rate_z_transform
 
     return d_prime
 
@@ -168,7 +178,8 @@ def analyse_irrelevant_performance(behaviour_matrix):
 
                 irrel_responses.append(ignore_irrel)
 
-    return irrel_responses
+    irrel_proportion = float(np.sum(irrel_responses)) / len(irrel_responses)
+    return irrel_proportion
 
 
 def get_outcome_of_next_n_trials(behaviour_matrix, trial_index, n=3):

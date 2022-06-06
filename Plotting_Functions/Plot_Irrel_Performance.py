@@ -1,80 +1,62 @@
-import os
-import Behaviour_Analysis_Functions
 import numpy as np
+import matplotlib.pyplot as plt
+import os
+import pandas as pd
+import seaborn
 
-def analyse_transition_session(base_directory):
 
-    # Load Behaviour Matrix
-    behaviour_matrix = np.load(os.path.join(base_directory, "Stimuli_Onsets", "Behaviour_Matrix.npy"), allow_pickle=True)
-    
-    # Create Output Directory
-    output_directory = os.path.join(base_directory, "Behavioural_Measures")
-    if not os.path.exists(output_directory):
-        os.mkdir(output_directory)
+def plot_irrel_performance(meta_group_list, group_names=None, mouse_names=None):
 
-    # Average Visual Performance
-    visual_trial_outcome_list, visual_hits, visual_misses, visual_false_alarms, visual_correct_rejections, visual_d_prime = Behaviour_Analysis_Functions.analyse_visual_discrimination(behaviour_matrix)
-  
-    # Average Odour Performance
-    odour_trial_outcome_list, odour_hits, odour_misses, odour_false_alarms, odour_correct_rejections, odour_d_prime = Behaviour_Analysis_Functions.analyse_odour_discrimination(behaviour_matrix)
+    irrel_performance_list = []
+    group_id_list = []
+    mouse_id_list = []
 
-    # Analyse Irrel Performance
-    irrel_performance = Behaviour_Analysis_Functions.analyse_irrelevant_performance(behaviour_matrix)
+    number_of_groups = len(meta_group_list)
 
-    # Odour To Visual Transition Distribution
-    odour_to_visual_transition_distribution = Behaviour_Analysis_Functions.get_odour_to_visual_transition_distribution(behaviour_matrix)
+    mouse_count = 0
+    for group_index in range(number_of_groups):
+        group = meta_group_list[group_index]
+        group_size = len(group)
 
-    # Visual To Odour Transition Distribution
-    visual_to_odour_transition_distribution = Behaviour_Analysis_Functions.get_visual_to_odour_transition_distribution(behaviour_matrix)
+        if group_names != None:
+            group_name = group_names[group_index]
+        else:
+            group_name = group_index
 
-    # Average Visual Performance After Switching
-    [visual_post_transition_trial_outcome_list,
-     visual_post_transition_hits,
-     visual_post_transition_misses,
-     visual_post_transition_false_alarms,
-     visual_post_transition_correct_rejections,
-     visual_post_transition_visual_d_prime,
-     visual_post_transition_trials_to_exclude] = Behaviour_Analysis_Functions.analyse_visual_performance_excluding_transitions(behaviour_matrix)
+        for mouse_index in range(group_size):
+            mouse = group[mouse_index]
+            mouse_count += 1
 
-    # Blockwise D'Prime
-    blockwise_visual_d_prime, blockwise_odour_d_prime = Behaviour_Analysis_Functions.calculate_blockwise_d_prime(behaviour_matrix)
+            if mouse_names != None:
+                mouse_name = mouse_names[group_index][mouse_index]
+            else:
+                mouse_name = mouse_count
 
-    # Pack All This Into A Dictionary
-    performance_dictionary = {
 
-    "visual_trial_outcome_list.npy":visual_trial_outcome_list,
-    "visual_hits.npy":visual_hits,
-    "visual_misses.npy":visual_misses,
-    "visual_false_alarms.npy":visual_false_alarms,
-    "visual_correct_rejections":visual_correct_rejections,
-    "visual_d_prime":visual_d_prime,
+            for session in mouse:
 
-    "odour_trial_outcome_list.npy":odour_trial_outcome_list,
-    "odour_hits.npy":odour_hits,
-    "odour_misses.npy":odour_misses,
-    "odour_false_alarms.npy":odour_false_alarms,
-    "odour_correct_rejections":odour_correct_rejections,
-    "odour_d_prime":odour_d_prime,
+                # Load Performance Dictionary
+                performance_dictionary = np.load(os.path.join(session, "Behavioural_Measures", "Performance_Dictionary.npy"), allow_pickle=True)[()]
 
-    "odour_to_visual_transition_distribution":odour_to_visual_transition_distribution,
-    "visual_to_odour_transition_distribution":visual_to_odour_transition_distribution,
+                # Extract Irrel Performance
+                irrel_performance = performance_dictionary["irrel_performance"]
+                print("IRrel Performance", irrel_performance)
 
-    "visual_post_transition_trial_outcome_list":visual_post_transition_trial_outcome_list,
-    "visual_post_transition_hits":visual_post_transition_hits,
-    "visual_post_transition_misses":visual_post_transition_misses,
-    "visual_post_transition_false_alarms":visual_post_transition_false_alarms,
-    "visual_post_transition_correct_rejections":visual_post_transition_correct_rejections,
-    "visual_post_transition_visual_d_prime":visual_post_transition_visual_d_prime,
-    "visual_post_transition_trials_to_exclude":visual_post_transition_trials_to_exclude,
+                irrel_performance_list.append(irrel_performance)
+                mouse_id_list.append(mouse_name)
+                group_id_list.append(group_name)
 
-    "blockwise_visual_d_prime":blockwise_visual_d_prime,
-    "blockwise_odour_d_prime":blockwise_odour_d_prime,
+    # Combine_Into Dataframe
+    dataframe = pd.DataFrame()
+    dataframe["Irrel Performance"] = irrel_performance_list
+    dataframe["Mouse"] = mouse_id_list
+    dataframe["Genotype"] = group_id_list
 
-    "irrel_performance":irrel_performance
-
-    }
-
-    np.save(os.path.join(output_directory, "Performance_Dictionary.npy"), performance_dictionary)
+    print("Dataframe", dataframe)
+    # seaborn.swarmplot(y="Irrel Performance", orient='v', hue="Mouse", data=dataframe)
+    axis = seaborn.swarmplot(y="Irrel Performance", hue="Mouse", x="Genotype", data=dataframe)
+    axis.set_ylim(0.5, 1)
+    plt.show()
 
 
 
@@ -87,7 +69,7 @@ control_session_list = [
         r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_05_Transition_Behaviour",
         r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_08_Transition_Imaging",
         r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_09_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_10_Transition_Imaging"
+        r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_10_Transition_Imaging",
     ],
 
     # 7.1B
@@ -160,12 +142,8 @@ mutant_session_list = [
 ]
 
 
-for mouse_list in control_session_list:
-    for session in mouse_list:
-        analyse_transition_session(session)
 
-
-for mouse_list in mutant_session_list:
-    for session in mouse_list:
-        analyse_transition_session(session)
-
+group_names =["Wildtype", "Neurexin"]
+mouse_names = [["NXAK4.1b", "NXAK7.1b", "NXAK14.1a", "NXAK22.1a"],["NXAK4.1a", "NXAK10.1a", "NXAK20.1b", "NXAK24.1c"]]
+plot_irrel_performance([control_session_list, mutant_session_list], group_names=group_names, mouse_names=mouse_names)
+#plot_blockwise_performance(session_list)
