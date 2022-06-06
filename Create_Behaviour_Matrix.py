@@ -150,6 +150,30 @@ def create_stimuli_dictionary():
 
 
 
+def split_stream_by_context_using_irrel(stimuli_onsets, irrel_onsets, surrounding_window=500):
+
+    context_positive_onsets = []
+    context_negative_onsets = []
+
+    # Iterate Through Visual 1 Onsets
+    for stimuli_onset in stimuli_onsets:
+        window_start = stimuli_onset - surrounding_window
+        window_end = stimuli_onset + surrounding_window
+
+        irrel = False
+        for irrel_onset in irrel_onsets:
+            if irrel_onset >= window_start and irrel_onset <= window_end:
+                irrel = True
+
+        if irrel == True:
+            context_positive_onsets.append(stimuli_onset)
+        else:
+            context_negative_onsets.append(stimuli_onset)
+
+    return context_negative_onsets, context_positive_onsets
+
+
+
 def split_stream_by_context(stimuli_onsets, context_onsets, context_window):
     context_negative_onsets = []
     context_positive_onsets = []
@@ -178,6 +202,13 @@ def split_visual_onsets_by_context(visual_1_onsets, visual_2_onsets, odour_1_ons
     visual_block_stimuli_1, odour_block_stimuli_1 = split_stream_by_context(visual_1_onsets, combined_odour_onsets, following_window_size)
     visual_block_stimuli_2, odour_block_stimuli_2 = split_stream_by_context(visual_2_onsets, combined_odour_onsets, following_window_size)
 
+    onsets_list = [visual_block_stimuli_1, visual_block_stimuli_2, odour_block_stimuli_1, odour_block_stimuli_2]
+
+    return onsets_list
+
+def split_visual_onsets_by_context_using_irrel_trace(visual_1_onsets, visual_2_onsets, irrel_onsets):
+    visual_block_stimuli_1, odour_block_stimuli_1 = split_stream_by_context_using_irrel(visual_1_onsets, irrel_onsets)
+    visual_block_stimuli_2, odour_block_stimuli_2 = split_stream_by_context_using_irrel(visual_2_onsets, irrel_onsets)
     onsets_list = [visual_block_stimuli_1, visual_block_stimuli_2, odour_block_stimuli_1, odour_block_stimuli_2]
 
     return onsets_list
@@ -250,6 +281,7 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
     end_trace = ai_data[stimuli_dictionary["Trial End"]]
     mousecam_trace = ai_data[stimuli_dictionary["Mousecam"]]
     photodiode_trace = ai_data[stimuli_dictionary["Photodiode"]]
+    irrel_trace = ai_data[stimuli_dictionary["Irrelevance"]]
 
     if visualise_lick_threshold:
         plt.plot(lick_trace)
@@ -272,10 +304,13 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
     reward_onsets   = get_step_onsets(reward_trace)
     frame_onsets    = get_step_onsets(frame_trace)
     end_onsets      = get_step_onsets(end_trace)
+    irrel_onsets = get_step_onsets(irrel_trace)
 
 
     # Split Visual Onsets By Context
-    visual_onsets_by_context = split_visual_onsets_by_context(vis_1_onsets, vis_2_onsets, odour_1_onsets, odour_2_onsets)
+    #visual_onsets_by_context = split_visual_onsets_by_context(vis_1_onsets, vis_2_onsets, odour_1_onsets, odour_2_onsets)
+    visual_onsets_by_context = split_visual_onsets_by_context_using_irrel_trace(vis_1_onsets, vis_2_onsets, irrel_onsets)
+
     vis_context_vis_1_onsets    = visual_onsets_by_context[0]
     vis_context_vis_2_onsets    = visual_onsets_by_context[1]
     odour_context_vis_1_onsets  = visual_onsets_by_context[2]
@@ -652,6 +687,8 @@ def get_block_boudaries(onsets_dictionary):
                 block_boundaries.append(trial)
                 block_types.append(current_block)
 
+    print("Block Boundaires", block_boundaries)
+    print("BLock Types", block_types)
     return block_boundaries, block_types
 
 
@@ -1045,7 +1082,7 @@ def create_behaviour_matrix(base_directory, behaviour_only=False):
 
 
 
-session_list = []
+session_list = [r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_10_Transition_Imaging"]
 
 for session in session_list:
     create_behaviour_matrix(session)

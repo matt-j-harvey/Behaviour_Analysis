@@ -152,77 +152,27 @@ def set_lick_thresholds(session_directory):
 
     app.exec_()
 
-
-control_session_list = [
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_02_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_04_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_05_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_08_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_09_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_10_Transition_Imaging",
-
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_03_22_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_03_23_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_03_24_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_03_27_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_03_30_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_03_31_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_04_01_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/7.1B/2021_04_02_Transition_Imaging",
-
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_12_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_13_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_14_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_15_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_16_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_17_Transition_Behaviour",
-
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/22.1A/2021_10_26_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/22.1A/2021_10_29_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/22.1A/2021_11_02_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/22.1A/2021_11_03_Transition_Imaging",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/22.1A/2021_11_04_Transition_Behaviour",
-        r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Controls/22.1A/2021_11_05_Transition_Imaging",
-    ]
-
-
-
-mutant_session_list = [
-
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/4.1A/2021_04_08_Transition_Imaging",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/4.1A/2021_04_10_Transition_Imaging",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/4.1A/2021_04_11_Transition_Behaviour",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/4.1A/2021_04_12_Transition_Imaging",
-
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/10.1A/2021_06_13_Transition_Behaviour",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/10.1A/2021_06_14_Transition_Imaging",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/10.1A/2021_06_16_Transition_Imaging",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/10.1A/2021_06_17_Transition_Behaviour",
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/10.1A/2021_06_18_Transition_Imaging",
-
-    #r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/20.1B/2021_11_22_Transition_Imaging",
-    r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/20.1B/2021_11_23_Transition_Behaviour",
-    r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/20.1B/2021_11_24_Transition_Imaging",
-    r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/20.1B/2021_11_26_Transition_Imaging",
-
-    r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/24.1C/2021_11_05_Transition_Imaging",
-    r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/24.1C/2021_11_08_Transition_Imaging",
-    r"/media/matthew/Seagate Expansion Drive1/1TB Contents/Behaviour_Analysis/Mutants/24.1C/2021_11_10_Transition_Imaging",
-]
-
-
 session_list = [
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_01_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_03_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_05_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_07_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_09_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_11_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_13_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_15_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_17_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_19_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_22_Discrimination_Imaging",
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_24_Discrimination_Imaging",
+
     "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_04_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_06_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_08_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_10_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_12_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_14_Discrimination_Imaging",
-    "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_22_Discrimination_Imaging"
-]
-
-session_list = [
-
+    "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1B/2021_02_22_Discrimination_Imaging",
 
     "/media/matthew/Expansion/Widefield_Analysis/NXAK14.1A/2021_04_29_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK14.1A/2021_05_01_Discrimination_Imaging",
@@ -231,15 +181,29 @@ session_list = [
     "/media/matthew/Expansion/Widefield_Analysis/NXAK14.1A/2021_05_07_Discrimination_Imaging",
     "/media/matthew/Expansion/Widefield_Analysis/NXAK14.1A/2021_05_09_Discrimination_Imaging",
 
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_09_25_Discrimination_Imaging",
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_09_29_Discrimination_Imaging",
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_10_01_Discrimination_Imaging",
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_10_03_Discrimination_Imaging",
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_10_05_Discrimination_Imaging",
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_10_07_Discrimination_Imaging",
-    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/NXAK22.1A/2021_10_08_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/2021_09_25_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/2021_09_29_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A//2021_10_01_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/2021_10_03_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/2021_10_05_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/2021_10_07_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NXAK22.1A/2021_10_08_Discrimination_Imaging",
+
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_15_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_16_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_17_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_19_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_23_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_25_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1D/2020_11_14_Discrimination_Imaging",
+
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1A/2020_11_15_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1A/2020_11_16_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1A/2020_11_17_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1A/2020_11_19_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1A/2020_11_21_Discrimination_Imaging",
+    "/media/matthew/Seagate Expansion Drive1/Processed_Widefield_Data/NRXN78.1A/2020_11_24_Discrimination_Imaging",
 ]
 
 
-#set_lick_thresholds(control_session_list)
 set_lick_thresholds(session_list)

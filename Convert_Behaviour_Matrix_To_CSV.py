@@ -29,6 +29,6 @@ def save_behaviour_matrix_as_svd(behaviour_matrix, save_directory):
                header=header, comments="")
 
 
-base_directory = "/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/14.1A/2021_06_12_Transition_Behaviour"
+base_directory = r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_10_Transition_Imaging"
 behaviour_matrix = np.load(os.path.join(base_directory, "Stimuli_Onsets", "Behaviour_Matrix.npy"), allow_pickle=True)
 save_behaviour_matrix_as_svd(behaviour_matrix, base_directory)
