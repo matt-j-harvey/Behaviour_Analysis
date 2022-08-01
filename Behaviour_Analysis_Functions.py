@@ -41,10 +41,10 @@ def extreme_value_corrections(selected_value, number_of_trials):
 
 def calculate_d_prime(hits, misses, false_alarms, correct_rejections):
 
-    print("Hits", hits)
-    print("Misses", misses)
-    print("False Alarms", false_alarms)
-    print("Correct Rejections", correct_rejections)
+    #print("Hits", hits)
+    #print("Misses", misses)
+    #print("False Alarms", false_alarms)
+    #print("Correct Rejections", correct_rejections)
 
     # Calculate Hit Rates and False Alarm Rates
     number_of_rewarded_trials = hits + misses
@@ -178,7 +178,11 @@ def analyse_irrelevant_performance(behaviour_matrix):
 
                 irrel_responses.append(ignore_irrel)
 
-    irrel_proportion = float(np.sum(irrel_responses)) / len(irrel_responses)
+
+    if len(irrel_responses) > 0:
+        irrel_proportion = float(np.sum(irrel_responses)) / len(irrel_responses)
+    else:
+        irrel_proportion = np.nan
     return irrel_proportion
 
 
@@ -544,8 +548,8 @@ def calculate_blockwise_d_prime(behaviour_matrix):
         # Check If First In Block
         if trial_data[9] == 1:
             block_starts.append(trial_index)
-            print("First in trial")
-            print(trial_index)
+            #print("First in trial")
+            #print(trial_index)
 
             trial_type = trial_data[1]
             if trial_type == 1 or trial_type == 2:
@@ -560,9 +564,9 @@ def calculate_blockwise_d_prime(behaviour_matrix):
     block_odour_performance = []
     block_visual_performance = []
 
-    print("Block Starts", block_starts)
-    print("Block Stops", block_stops)
-    print("Block Types", block_types)
+    #print("Block Starts", block_starts)
+    #print("Block Stops", block_stops)
+    #print("Block Types", block_types)
 
     for block_index in range(number_of_blocks):
 

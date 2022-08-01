@@ -1,38 +1,63 @@
-import os
-import Behaviour_Analysis_Functions
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
-def analyse_discrimination_session(base_directory):
-
-    # Load Behaviour Matrix
-    behaviour_matrix = np.load(os.path.join(base_directory, "Stimuli_Onsets", "Behaviour_Matrix.npy"), allow_pickle=True)
-    
-    # Create Output Directory
-    output_directory = os.path.join(base_directory, "Behavioural_Measures")
-    if not os.path.exists(output_directory):
-        os.mkdir(output_directory)
-
-    # Average Visual Performance
-    visual_trial_outcome_list, visual_hits, visual_misses, visual_false_alarms, visual_correct_rejections, visual_d_prime = Behaviour_Analysis_Functions.analyse_visual_discrimination(behaviour_matrix)
-
-    # Pack All This Into A Dictionary
-    performance_dictionary = {
-    "visual_trial_outcome_list.npy":visual_trial_outcome_list,
-    "visual_hits.npy":visual_hits,
-    "visual_misses.npy":visual_misses,
-    "visual_false_alarms.npy":visual_false_alarms,
-    "visual_correct_rejections":visual_correct_rejections,
-    "visual_d_prime":visual_d_prime,
+def create_stimuli_dictionary():
+    channel_index_dictionary = {
+        "Photodiode": 0,
+        "Reward": 1,
+        "Lick": 2,
+        "Visual 1": 3,
+        "Visual 2": 4,
+        "Odour 1": 5,
+        "Odour 2": 6,
+        "Irrelevance": 7,
+        "Running": 8,
+        "Trial End": 9,
+        "Camera Trigger": 10,
+        "Camera Frames": 11,
+        "LED 1": 12,
+        "LED 2": 13,
+        "Mousecam": 14,
+        "Optogenetics": 15,
     }
 
-    print("session: ", base_directory, "Visual D Prime: ", visual_d_prime)
-    np.save(os.path.join(output_directory, "Performance_Dictionary.npy"), performance_dictionary)
+    return channel_index_dictionary
+
+
+def get_lick_onsets(lick_trace, lick_threshold, preceeding_window=100):
+
+    state = 0
+    number_of_timepoints = len(lick_trace)
+    lick_threshold_tolerance = lick_threshold * 0.2
+
+    lick_onsets = []
+    for timepoint_index in range(preceeding_window, number_of_timepoints):
+
+        # Check We Are Below In Preceeding Window
+        if np.max(lick_trace[timepoint_index-preceeding_window:timepoint_index]) < lick_threshold - lick_threshold_tolerance:
+
+            if lick_trace[timepoint_index] > lick_threshold:
+                lick_onsets.append(timepoint_index)
+
+    """
+    figure_1 = plt.figure()
+    axis_1 = figure_1.add_subplot(1,1,1)
+    axis_1.plot(lick_trace)
+    for onset in lick_onsets:
+        axis_1.axvline(onset, c='k')
+    plt.show()
+    """
+    print("licks: ", len(lick_onsets))
+    return lick_onsets
 
 
 
 
+# Load Downsampled AI Trace
 
-control_session_list = [
+
+session_list = [
 
     # Controls 46 sessions
 
@@ -94,11 +119,8 @@ control_session_list = [
     r"/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_22_Discrimination_Imaging",
     r"/media/matthew/Expansion/Widefield_Analysis/NXAK7.1B/2021_02_24_Discrimination_Imaging",
 
-]
 
-mutant_session_list = [
     # Mutants
-
     # 4.1A - 15
     r"/media/matthew/Seagate Expansion Drive2/Processed_Widefield_Data/NXAK4.1A/2021_02_02_Discrimination_Imaging",
     r"/media/matthew/Seagate Expansion Drive2/Processed_Widefield_Data/NXAK4.1A/2021_02_04_Discrimination_Imaging",
@@ -174,35 +196,15 @@ mutant_session_list = [
 
 ]
 
-session_list = [
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_13_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_14_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_15_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_16_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_17_Discrimination_Imaging",
+for base_directory in session_list:
+    ai_matrix = np.load(os.path.join(base_directory, "Downsampled_AI_Matrix_Framewise.npy"))
 
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_19_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_21_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_23_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_25_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_27_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_11_29_Discrimination_Imaging",
+    stimuli_dictionary = create_stimuli_dictionary()
+    lick_trace = ai_matrix[stimuli_dictionary["Lick"]]
 
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_12_01_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_12_03_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_12_05_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_12_07_Discrimination_Imaging",
-    r"/media/matthew/Seagate Expansion Drive/Widefield_Imaging/Processed_Widefield_Data/NRXN71.2A/2020_12_09_Discrimination_Imaging",
-]
+    lick_threshold = np.load(os.path.join(base_directory, "Lick_Threshold.npy"))
+    print("lick Threshold", lick_threshold)
 
+    lick_onsets = get_lick_onsets(lick_trace, lick_threshold)
 
-for session in session_list:
-    analyse_discrimination_session(session)
-
-"""
-for session in control_session_list:
-    analyse_discrimination_session(session)
-
-for session in mutant_session_list:
-    analyse_discrimination_session(session)
-"""
+    np.save(os.path.join(base_directory, "Stimuli_Onsets", "lick_onsets.npy"), lick_onsets)

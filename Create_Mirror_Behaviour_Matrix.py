@@ -15,7 +15,7 @@ from matplotlib import gridspec, patches
 sys.path.append("/home/matthew/Documents/Github_Code/Widefield_Preprocessing")
 
 import Widefield_General_Functions
-import Get_Stable_Windows
+import Get_Stable_Windows_Mirror
 import Plot_Behaviour_Matrix
 
 
@@ -162,31 +162,10 @@ def create_stimuli_dictionary():
 
 
 
-def split_stream_by_context_using_irrel(stimuli_onsets, irrel_onsets, surrounding_window=500):
-
-    context_positive_onsets = []
-    context_negative_onsets = []
-
-    # Iterate Through Visual 1 Onsets
-    for stimuli_onset in stimuli_onsets:
-        window_start = stimuli_onset - surrounding_window
-        window_end = stimuli_onset + surrounding_window
-
-        irrel = False
-        for irrel_onset in irrel_onsets:
-            if irrel_onset >= window_start and irrel_onset <= window_end:
-                irrel = True
-
-        if irrel == True:
-            context_positive_onsets.append(stimuli_onset)
-        else:
-            context_negative_onsets.append(stimuli_onset)
-
-    return context_negative_onsets, context_positive_onsets
-
 
 
 def split_stream_by_context(stimuli_onsets, context_onsets, context_window):
+
     context_negative_onsets = []
     context_positive_onsets = []
 
@@ -208,22 +187,18 @@ def split_stream_by_context(stimuli_onsets, context_onsets, context_window):
     return context_negative_onsets, context_positive_onsets
 
 
-def split_visual_onsets_by_context(visual_1_onsets, visual_2_onsets, odour_1_onsets, odour_2_onsets, following_window_size=5000):
 
-    combined_odour_onsets = odour_1_onsets + odour_2_onsets
-    visual_block_stimuli_1, odour_block_stimuli_1 = split_stream_by_context(visual_1_onsets, combined_odour_onsets, following_window_size)
-    visual_block_stimuli_2, odour_block_stimuli_2 = split_stream_by_context(visual_2_onsets, combined_odour_onsets, following_window_size)
+def split_odour_onsets_by_context(visual_1_onsets, visual_2_onsets, odour_1_onsets, odour_2_onsets, following_window_size=5000):
+
+    combined_visual_onsets = visual_1_onsets + visual_2_onsets
+    odour_block_stimuli_1, visual_block_stimuli_1 = split_stream_by_context(odour_1_onsets, combined_visual_onsets, following_window_size)
+    odour_block_stimuli_2, visual_block_stimuli_2 = split_stream_by_context(odour_2_onsets, combined_visual_onsets, following_window_size)
 
     onsets_list = [visual_block_stimuli_1, visual_block_stimuli_2, odour_block_stimuli_1, odour_block_stimuli_2]
 
     return onsets_list
 
-def split_visual_onsets_by_context_using_irrel_trace(visual_1_onsets, visual_2_onsets, irrel_onsets):
-    visual_block_stimuli_1, odour_block_stimuli_1 = split_stream_by_context_using_irrel(visual_1_onsets, irrel_onsets)
-    visual_block_stimuli_2, odour_block_stimuli_2 = split_stream_by_context_using_irrel(visual_2_onsets, irrel_onsets)
-    onsets_list = [visual_block_stimuli_1, visual_block_stimuli_2, odour_block_stimuli_1, odour_block_stimuli_2]
 
-    return onsets_list
 
 
 def get_offset(onset, stream, threshold=0.5):
@@ -293,7 +268,6 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
     end_trace = ai_data[stimuli_dictionary["Trial End"]]
     mousecam_trace = ai_data[stimuli_dictionary["Mousecam"]]
     photodiode_trace = ai_data[stimuli_dictionary["Photodiode"]]
-    irrel_trace = ai_data[stimuli_dictionary["Irrelevance"]]
 
     if visualise_lick_threshold:
         plt.plot(lick_trace)
@@ -316,16 +290,30 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
     reward_onsets   = get_step_onsets(reward_trace)
     frame_onsets    = get_step_onsets(frame_trace)
     end_onsets      = get_step_onsets(end_trace)
-    irrel_onsets = get_step_onsets(irrel_trace)
 
-    # Split Visual Onsets By Context
-    visual_onsets_by_context = split_visual_onsets_by_context(vis_1_onsets, vis_2_onsets, odour_1_onsets, odour_2_onsets)
-    #visual_onsets_by_context = split_visual_onsets_by_context_using_irrel_trace(vis_1_onsets, vis_2_onsets, irrel_onsets)
 
-    vis_context_vis_1_onsets    = visual_onsets_by_context[0]
-    vis_context_vis_2_onsets    = visual_onsets_by_context[1]
-    odour_context_vis_1_onsets  = visual_onsets_by_context[2]
-    odour_context_vis_2_onsets  = visual_onsets_by_context[3]
+    # In Mirror Context We Need To Split Odour Onsets By Context
+    # The Relevance Trace Does not Work
+    odour_onsets_by_context = split_odour_onsets_by_context(vis_1_onsets, vis_2_onsets, odour_1_onsets, odour_2_onsets)
+
+    vis_context_odour_1_onsets    = odour_onsets_by_context[0]
+    vis_context_odour_2_onsets    = odour_onsets_by_context[1]
+    odour_context_odour_1_onsets  = odour_onsets_by_context[2]
+    odour_context_odour_2_onsets  = odour_onsets_by_context[3]
+
+    plt.plot(vis_1_trace, c='b')
+    plt.plot(vis_2_trace, c='r')
+    plt.plot(odour_1_trace, c='g')
+    plt.plot(odour_2_trace, c='m')
+    plt.plot(end_trace, c='k')
+
+    plt.scatter(vis_context_odour_1_onsets, np.ones(len(vis_context_odour_1_onsets)), c='k')
+    plt.scatter(vis_context_odour_2_onsets, np.ones(len(vis_context_odour_2_onsets)), c='k')
+    plt.scatter(odour_context_odour_1_onsets, np.ones(len(odour_context_odour_1_onsets)), c='c')
+    plt.scatter(odour_context_odour_2_onsets, np.ones(len(odour_context_odour_2_onsets)), c='c')
+
+    plt.show()
+
 
     # Get Widefield Frame Indexes
     widefield_frame_onsets = get_frame_indexes(frame_trace)
@@ -338,13 +326,6 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
     # Get Photodiode Times
     photodiode_onsets, photodiode_line = get_step_onsets_photodiode(photodiode_trace, threshold=0.25, window=5)
 
-    """
-    plt.plot(vis_1_trace)
-    plt.plot(odour_1_trace)
-    plt.scatter(vis_context_vis_1_onsets, np.ones(len(vis_context_vis_1_onsets)), c='b')
-    plt.scatter(odour_context_vis_1_onsets, np.ones(len(odour_context_vis_1_onsets)), c='g')
-    plt.show()
-    """
 
     onsets_dictionary ={"vis_1_onsets":vis_1_onsets,
                         "vis_2_onsets":vis_2_onsets,
@@ -352,10 +333,10 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
                         "odour_2_onsets":odour_2_onsets,
                         "lick_onsets":lick_onsets,
                         "reward_onsets":reward_onsets,
-                        "vis_context_vis_1_onsets":vis_context_vis_1_onsets,
-                        "vis_context_vis_2_onsets":vis_context_vis_2_onsets,
-                        "odour_context_vis_1_onsets":odour_context_vis_1_onsets,
-                        "odour_context_vis_2_onsets":odour_context_vis_2_onsets,
+                        "vis_context_odour_1_onsets":vis_context_odour_1_onsets,
+                        "vis_context_odour_2_onsets":vis_context_odour_2_onsets,
+                        "odour_context_odour_1_onsets":odour_context_odour_1_onsets,
+                        "odour_context_odour_2_onsets":odour_context_odour_2_onsets,
                         "frame_onsets":frame_onsets,
                         "trial_ends":end_onsets,
                         "photodiode_onsets":photodiode_onsets}
@@ -381,19 +362,20 @@ def extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=0
 
 
 def get_trial_type(onset, onsets_dictionary):
-    vis_context_vis_1_onsets = onsets_dictionary["vis_context_vis_1_onsets"]
-    vis_context_vis_2_onsets = onsets_dictionary["vis_context_vis_2_onsets"]
-    odour_1_onsets = onsets_dictionary["odour_1_onsets"]
-    odour_2_onsets = onsets_dictionary["odour_2_onsets"]
 
-    if onset in vis_context_vis_1_onsets:
+    odour_context_odour_1_onsets = onsets_dictionary["odour_context_odour_1_onsets"]
+    odour_context_odour_2_onsets = onsets_dictionary["odour_context_odour_2_onsets"]
+    vis_1_onsets = onsets_dictionary["vis_1_onsets"]
+    vis_2_onsets = onsets_dictionary["vis_2_onsets"]
+
+    if onset in vis_1_onsets:
         return 1
-    elif onset in vis_context_vis_2_onsets:
+    elif onset in vis_2_onsets:
         return 2
-    elif onset in odour_1_onsets:
+    elif onset in odour_context_odour_1_onsets:
         return 3
-    elif onset in odour_2_onsets:
-        return  4
+    elif onset in odour_context_odour_2_onsets:
+        return 4
 
 
 def get_trial_end(onset, onsets_dictionary, traces_dictionary):
@@ -454,50 +436,45 @@ def check_reward_outcome(onset, trial_end, traces_dictionary):
 def get_irrel_details(onset, trial_type, onsets_dictionary, traces_dictionary, irrel_preceeding_window=5000):
 
     # Get Irrel Offsets:
-    odour_context_vis_1_onsets = onsets_dictionary["odour_context_vis_1_onsets"]
-    odour_context_vis_2_onsets = onsets_dictionary["odour_context_vis_2_onsets"]
-    vis_1_trace = traces_dictionary['vis_1_trace']
-    vis_2_trace = traces_dictionary['vis_2_trace']
+    vis_context_odour_1_onsets = onsets_dictionary["vis_context_odour_1_onsets"]
+    vis_context_odour_2_onsets = onsets_dictionary["vis_context_odour_2_onsets"]
+    odour_1_trace = traces_dictionary['odour_1_trace']
+    odour_2_trace = traces_dictionary['odour_2_trace']
 
-    vis_1_irrel_offsets = []
-    for irrel_vis_1_onset in odour_context_vis_1_onsets:
-        vis_1_irrel_offsets.append(get_offset(irrel_vis_1_onset, vis_1_trace))
+    odour_1_irrel_offsets = []
+    for irrel_odour_1_onset in vis_context_odour_1_onsets:
+        odour_1_irrel_offsets.append(get_offset(irrel_odour_1_onset, odour_1_trace))
 
-    vis_2_irrel_offsets = []
-    for irrel_vis_2_onset in odour_context_vis_2_onsets:
-        vis_2_irrel_offsets.append(get_offset(irrel_vis_2_onset, vis_2_trace))
-
+    odour_2_irrel_offsets = []
+    for irrel_odour_2_onset in vis_context_odour_2_onsets:
+        odour_2_irrel_offsets.append(get_offset(irrel_odour_2_onset, odour_2_trace))
 
     preceeded = 0
     irrel_type = np.nan
     irrel_onset = np.nan
 
-    if trial_type == 1 or trial_type == 2:
+    if trial_type == 3 or trial_type == 4:
         return preceeded, irrel_type, irrel_onset
 
     else:
         window_start = (onset - irrel_preceeding_window)
         window_stop = onset
 
-        #print("Onset", onset)
-        #print("Window start", window_start)
-        #print("Window Stop", window_stop)
-
         irrel_trial_index = 0
-        for candidate_irrel_offset in vis_1_irrel_offsets:
+        for candidate_irrel_offset in odour_1_irrel_offsets:
             if candidate_irrel_offset > window_start and candidate_irrel_offset < window_stop:
                 preceeded = 1
-                irrel_type = 1
-                irrel_onset = odour_context_vis_1_onsets[irrel_trial_index]
-                return  preceeded, irrel_type, irrel_onset
+                irrel_type = 3
+                irrel_onset = vis_context_odour_1_onsets[irrel_trial_index]
+                return preceeded, irrel_type, irrel_onset
             irrel_trial_index += 1
 
         irrel_trial_index = 0
-        for candidate_irrel_offset in vis_2_irrel_offsets:
+        for candidate_irrel_offset in odour_2_irrel_offsets:
             if candidate_irrel_offset > window_start and candidate_irrel_offset < window_stop:
                 preceeded = 1
-                irrel_type = 2
-                irrel_onset = odour_context_vis_2_onsets[irrel_trial_index]
+                irrel_type = 4
+                irrel_onset = vis_context_odour_2_onsets[irrel_trial_index]
                 return  preceeded, irrel_type, irrel_onset
             irrel_trial_index += 1
 
@@ -512,6 +489,10 @@ def get_irrel_offset(irrel_onset, irrel_type, traces_dictionary):
         irrel_trace = traces_dictionary["vis_1_trace"]
     elif irrel_type == 2:
         irrel_trace = traces_dictionary["vis_2_trace"]
+    elif irrel_type == 3:
+        irrel_trace = traces_dictionary["odour_1_trace"]
+    elif irrel_type == 4:
+        irrel_trace = traces_dictionary["odour_2_trace"]
 
     offset = get_offset(irrel_onset, irrel_trace)
 
@@ -588,11 +569,6 @@ def classify_trial(onset, onsets_dictionary, traces_dictionary, trial_index, lic
     15 trial_end = float end of trial
     16 Photodiode Onset = Adjusted Visual stimuli onset to when the photodiode detects the stimulus
     17 Photodiode Offset = Adjusted Visual Stimuli Offset to when the photodiode detects the stimulus
-
-    18 Onset closest Frame
-    19 Offset Closest Frame
-    20 Irrel Onset Closest Frame
-    21 Irrel Offset Closest Frame
     """
 
     # Get Trial Type
@@ -629,10 +605,6 @@ def classify_trial(onset, onsets_dictionary, traces_dictionary, trial_index, lic
     first_in_block = None
     in_block_of_stable_performance = 0
     block_number = None
-    Onset_closest_Frame = None
-    Offset_Closest_Frame = None
-    Irrel_Onset_Closest_Frame = None
-    Irrel_Offset_Closest_Frame = None
 
 
     trial_vector = [trial_index,
@@ -652,12 +624,7 @@ def classify_trial(onset, onsets_dictionary, traces_dictionary, trial_index, lic
                     irrel_offset,
                     trial_end,
                     photodiode_onset,
-                    photodiode_offset,
-                    Onset_closest_Frame,
-                    Offset_Closest_Frame,
-                    Irrel_Onset_Closest_Frame,
-                    Irrel_Offset_Closest_Frame
-                    ]
+                    photodiode_offset]
 
     return trial_vector
 
@@ -674,17 +641,17 @@ def print_behaviour_matrix(behaviour_matrix):
 
 def get_block_boudaries(onsets_dictionary):
 
-    odour_1_onsets              = onsets_dictionary["odour_1_onsets"]
-    odour_2_onsets              = onsets_dictionary["odour_2_onsets"]
-    vis_context_vis_1_onsets    = onsets_dictionary["vis_context_vis_1_onsets"]
-    vis_context_vis_2_onsets    = onsets_dictionary["vis_context_vis_2_onsets"]
+    vis_1_onsets = onsets_dictionary["vis_1_onsets"]
+    vis_2_onsets = onsets_dictionary["vis_2_onsets"]
+    odour_context_odour_1_onsets = onsets_dictionary["odour_context_odour_1_onsets"]
+    odour_context_odour_2_onsets = onsets_dictionary["odour_context_odour_2_onsets"]
 
     # Get Visual trial Stimuli,
-    vis_context_stimuli = np.concatenate([vis_context_vis_1_onsets, vis_context_vis_2_onsets])
+    vis_context_stimuli = np.concatenate([vis_1_onsets, vis_2_onsets])
     vis_context_stimuli.sort()
 
     # Get Odour Trial Stimuli
-    odour_context_stimuli = np.concatenate([odour_1_onsets, odour_2_onsets])
+    odour_context_stimuli = np.concatenate([odour_context_odour_1_onsets, odour_context_odour_2_onsets])
     odour_context_stimuli.sort()
 
     all_onsets = np.concatenate([vis_context_stimuli, odour_context_stimuli])
@@ -753,28 +720,6 @@ def add_stable_windows(behaviour_matrix, stable_windows):
     return behaviour_matrix
 
 
-def get_single_nearest_frame(onset, frame_times):
-    window_size = 50
-    smallest_distance = 1000
-    closest_frame = None
-
-    window_start = int(onset - window_size)
-    window_stop = int(onset + window_size)
-
-    for timepoint in range(window_start, window_stop):
-
-        # There is a frame at this time
-        if timepoint in frame_times:
-            distance = abs(onset - timepoint)
-
-            if distance < smallest_distance:
-                smallest_distance = distance
-                closest_frame = frame_times.index(timepoint)
-                # closest_frame = frame_onsets[timepoint]
-
-    return closest_frame
-
-
 
 def get_nearest_frame(stimuli_onsets, frame_times):
 
@@ -838,115 +783,117 @@ def convert_to_photodiode_onsets(photodiode_onsets, stimuli_onsets):
 def save_onsets(base_directory, behaviour_matrix, selected_trials, onsets_dictionary, save_directory, photodiode_onsets):
 
     # Load Trials
-    visual_context_stable_vis_1_trials      = selected_trials[0]
-    visual_context_stable_vis_2_trials      = selected_trials[1]
-    odour_context_stable_vis_1_trials       = selected_trials[2]
-    odour_context_stable_vis_2_trials       = selected_trials[3]
-    perfect_transition_trials               = selected_trials[4]
-    odour_expected_present_trials           = selected_trials[5]
-    odour_not_expected_not_present_trials   = selected_trials[6]
-    odour_1_cued                            = selected_trials[7]
-    odour_2_cued                            = selected_trials[8]
-    odour_1_not_cued                        = selected_trials[9]
-    odour_2_not_cued                        = selected_trials[10]
-    miss_transition_trials                  = selected_trials[11]
-    odour_expected_absent_trials            = selected_trials[12]
+    Odour_Context_Odour_1_Stable_trials     = selected_trials[0]
+    Odour_Context_Odour_2_Stable_trials     = selected_trials[1]
+    Visual_Context_Odour_1_Stable_trials    = selected_trials[2]
+    Visual_Context_Odour_2_Stable_trials    = selected_trials[3]
+    Visual_Expected_Absent_trials           = selected_trials[4]
+    Visual_Expected_Present_trials          = selected_trials[5]
+    Visual_Not_Expected_Absent_trials       = selected_trials[6]
+    Perfect_Switch_Trials_trials            = selected_trials[7]
+    Miss_Switch_Trials                      = selected_trials[8]
+    Vis_1_cued_trials                       = selected_trials[9]
+    Vis_2_cued_trials                       = selected_trials[10]
+    Vis_1_not_cued_trials                   = selected_trials[11]
+    Vis_2_not_cued_trials                   = selected_trials[12]
 
-    # Get Stimuli Times For Each Trial Cateogry
-    visual_context_stable_vis_1_times      = get_times_from_behaviour_matrix(behaviour_matrix, visual_context_stable_vis_1_trials,    16) #11
-    visual_context_stable_vis_2_times      = get_times_from_behaviour_matrix(behaviour_matrix, visual_context_stable_vis_2_trials,    16) #11
-    odour_context_stable_vis_1_times       = get_times_from_behaviour_matrix(behaviour_matrix, odour_context_stable_vis_1_trials,     16) #13
-    odour_context_stable_vis_2_times       = get_times_from_behaviour_matrix(behaviour_matrix, odour_context_stable_vis_2_trials,     16) #13
-    perfect_transition_times               = get_times_from_behaviour_matrix(behaviour_matrix, perfect_transition_trials,             17) #12
-    odour_expected_present_times           = get_times_from_behaviour_matrix(behaviour_matrix, odour_expected_present_trials,         17) #14
-    odour_not_expected_not_present_times   = get_times_from_behaviour_matrix(behaviour_matrix, odour_not_expected_not_present_trials, 17) #12
-    odour_1_cued_times                     = get_times_from_behaviour_matrix(behaviour_matrix, odour_1_cued,                          11) #11
-    odour_2_cued_times                     = get_times_from_behaviour_matrix(behaviour_matrix, odour_2_cued,                          11) #11
-    odour_1_not_cued_times                 = get_times_from_behaviour_matrix(behaviour_matrix, odour_1_not_cued,                      11) #11
-    odour_2_not_cued_times                 = get_times_from_behaviour_matrix(behaviour_matrix, odour_2_not_cued,                      11) #11
-    miss_transition_times                  = get_times_from_behaviour_matrix(behaviour_matrix, miss_transition_trials,                17) #11
-    odour_expected_absent_times            = get_times_from_behaviour_matrix(behaviour_matrix, odour_expected_absent_trials,          17) #11
+    print("Visual Expected Present Trials", Visual_Expected_Present_trials)
+    print("Visual expected absent trials", Visual_Expected_Absent_trials)
+    print("Visual Not Expected, Not Present Trials", Visual_Not_Expected_Absent_trials)
+
+    # Get Stimuli Times For Each Trial Category
+    Odour_Context_Odour_1_Stable_times  = get_times_from_behaviour_matrix(behaviour_matrix, Odour_Context_Odour_1_Stable_trials, 11)
+    Odour_Context_Odour_2_Stable_times  = get_times_from_behaviour_matrix(behaviour_matrix, Odour_Context_Odour_2_Stable_trials, 11)
+    Visual_Context_Odour_1_Stable_times = get_times_from_behaviour_matrix(behaviour_matrix, Visual_Context_Odour_1_Stable_trials, 13)
+    Visual_Context_Odour_2_Stable_times = get_times_from_behaviour_matrix(behaviour_matrix, Visual_Context_Odour_2_Stable_trials, 13)
+    Visual_Expected_Absent_times        = get_times_from_behaviour_matrix(behaviour_matrix, Visual_Expected_Absent_trials, 12)
+    Visual_Expected_Present_times       = get_times_from_behaviour_matrix(behaviour_matrix, Visual_Expected_Present_trials, 14)
+    Visual_Not_Expected_Absent_times    = get_times_from_behaviour_matrix(behaviour_matrix, Visual_Not_Expected_Absent_trials, 12)
+    Perfect_Switch_Trials_times         = get_times_from_behaviour_matrix(behaviour_matrix, Perfect_Switch_Trials_trials, 12)
+    Miss_Switch_times                   = get_times_from_behaviour_matrix(behaviour_matrix, Miss_Switch_Trials, 12)
+    Vis_1_cued_times                    = get_times_from_behaviour_matrix(behaviour_matrix, Vis_1_cued_trials, 11)
+    Vis_2_cued_times                    = get_times_from_behaviour_matrix(behaviour_matrix, Vis_2_cued_trials, 11)
+    Vis_1_not_cued_times                = get_times_from_behaviour_matrix(behaviour_matrix, Vis_1_not_cued_trials, 11)
+    Vis_2_not_cued_times                = get_times_from_behaviour_matrix(behaviour_matrix, Vis_2_not_cued_trials, 11)
 
     # Load Frame Onsets
     frame_onsets = onsets_dictionary['frame_onsets']
 
     # Get Frames For Each Stimuli Category
-    visual_context_stable_vis_1_onsets      = get_nearest_frame(visual_context_stable_vis_1_times,      frame_onsets)
-    visual_context_stable_vis_2_onsets      = get_nearest_frame(visual_context_stable_vis_2_times,      frame_onsets)
-    odour_context_stable_vis_1_onsets       = get_nearest_frame(odour_context_stable_vis_1_times,       frame_onsets)
-    odour_context_stable_vis_2_onsets       = get_nearest_frame(odour_context_stable_vis_2_times,       frame_onsets)
-    perfect_transition_onsets               = get_nearest_frame(perfect_transition_times,               frame_onsets)
-    odour_expected_present_onsets           = get_nearest_frame(odour_expected_present_times,           frame_onsets)
-    odour_not_expected_not_present_onsets   = get_nearest_frame(odour_not_expected_not_present_times,   frame_onsets)
-    odour_1_cued_onsets                     = get_nearest_frame(odour_1_cued_times,                     frame_onsets)
-    odour_2_cued_onsets                     = get_nearest_frame(odour_2_cued_times,                     frame_onsets)
-    odour_1_not_cued_onsets                 = get_nearest_frame(odour_1_not_cued_times,                 frame_onsets)
-    odour_2_not_cued_onsets                 = get_nearest_frame(odour_2_not_cued_times,                 frame_onsets)
-    miss_transition_onsets                  = get_nearest_frame(miss_transition_times,                  frame_onsets)
-    odour_expected_absent_onsets            = get_nearest_frame(odour_expected_absent_times,            frame_onsets)
+    Odour_Context_Odour_1_Stable_onsets     = get_nearest_frame(Odour_Context_Odour_1_Stable_times,    frame_onsets)
+    Odour_Context_Odour_2_Stable_onsets     = get_nearest_frame(Odour_Context_Odour_2_Stable_times,    frame_onsets)
+    Visual_Context_Odour_1_Stable_onsets    = get_nearest_frame(Visual_Context_Odour_1_Stable_times,   frame_onsets)
+    Visual_Context_Odour_2_Stable_onsets    = get_nearest_frame(Visual_Context_Odour_2_Stable_times,   frame_onsets)
+    print("Visual expected absent times", Visual_Expected_Absent_times)
+    Visual_Expected_Absent_onsets           = get_nearest_frame(Visual_Expected_Absent_times,          frame_onsets)
+    Visual_Expected_Present_onsets          = get_nearest_frame(Visual_Expected_Present_times,         frame_onsets)
+    Visual_Not_Expected_Absent_onsets       = get_nearest_frame(Visual_Not_Expected_Absent_times,      frame_onsets)
+    Perfect_Switch_Trials_onsets            = get_nearest_frame(Perfect_Switch_Trials_times,           frame_onsets)
+    Miss_Switch_onsets                      = get_nearest_frame(Miss_Switch_times,                     frame_onsets)
+    Vis_1_cued_onsets                       = get_nearest_frame(Vis_1_cued_times,                      frame_onsets)
+    Vis_2_cued_onsets                       = get_nearest_frame(Vis_2_cued_times,                      frame_onsets)
+    Vis_1_not_cued_onsets                   = get_nearest_frame(Vis_1_not_cued_times,                  frame_onsets)
+    Vis_2_not_cued_onsets                   = get_nearest_frame(Vis_2_not_cued_times,                  frame_onsets)
 
     # Save Onsets
-    np.save(os.path.join(save_directory, "visual_context_stable_vis_1_onsets.npy"),     visual_context_stable_vis_1_onsets)
-    np.save(os.path.join(save_directory, "visual_context_stable_vis_2_onsets.npy"),     visual_context_stable_vis_2_onsets)
-    np.save(os.path.join(save_directory, "odour_context_stable_vis_1_onsets.npy"),      odour_context_stable_vis_1_onsets)
-    np.save(os.path.join(save_directory, "odour_context_stable_vis_2_onsets.npy"),      odour_context_stable_vis_2_onsets)
-    np.save(os.path.join(save_directory, "perfect_transition_onsets.npy"),              perfect_transition_onsets)
-    np.save(os.path.join(save_directory, "odour_expected_absent_onsets.npy"),           odour_expected_absent_onsets)
-    np.save(os.path.join(save_directory, "odour_expected_present_onsets.npy"),          odour_expected_present_onsets)
-    np.save(os.path.join(save_directory, "odour_not_expected_not_present_onsets.npy"),  odour_not_expected_not_present_onsets)
-    np.save(os.path.join(save_directory, "odour_1_cued_onsets.npy"),                    odour_1_cued_onsets)
-    np.save(os.path.join(save_directory, "odour_2_cued_onsets.npy"),                    odour_2_cued_onsets)
-    np.save(os.path.join(save_directory, "odour_1_not_cued_onsets.npy"),                odour_1_not_cued_onsets)
-    np.save(os.path.join(save_directory, "odour_2_not_cued_onsets.npy"),                odour_2_not_cued_onsets)
-    np.save(os.path.join(save_directory, "missed_transition_onsets.npy"),               miss_transition_onsets)
-
+    np.save(os.path.join(save_directory, "Odour_Context_Odour_1_Stable_onsets.npy"),    Odour_Context_Odour_1_Stable_onsets)
+    np.save(os.path.join(save_directory, "Odour_Context_Odour_2_Stable_onsets.npy"),    Odour_Context_Odour_2_Stable_onsets)
+    np.save(os.path.join(save_directory, "Visual_Context_Odour_1_Stable_onsets.npy"),   Visual_Context_Odour_1_Stable_onsets)
+    np.save(os.path.join(save_directory, "Visual_Context_Odour_2_Stable_onsets.npy"),   Visual_Context_Odour_2_Stable_onsets)
+    np.save(os.path.join(save_directory, "Visual_Expected_Absent_onsets.npy"),          Visual_Expected_Absent_onsets)
+    np.save(os.path.join(save_directory, "Visual_Expected_Present_onsets.npy"),         Visual_Expected_Present_onsets)
+    np.save(os.path.join(save_directory, "Visual_Not_Expected_Absent_onsets.npy"),      Visual_Not_Expected_Absent_onsets)
+    np.save(os.path.join(save_directory, "Perfect_Switch_Trials_onsets.npy"),           Perfect_Switch_Trials_onsets)
+    np.save(os.path.join(save_directory, "Miss_Switch_onsets.npy"),                     Miss_Switch_onsets)
+    np.save(os.path.join(save_directory, "Vis_1_cued_onsets.npy"),                      Vis_1_cued_onsets)
+    np.save(os.path.join(save_directory, "Vis_2_cued_onsets.npy"),                      Vis_2_cued_onsets)
+    np.save(os.path.join(save_directory, "Vis_1_not_cued_onsets.npy"),                  Vis_1_not_cued_onsets)
+    np.save(os.path.join(save_directory, "Vis_2_not_cued_onsets.npy"),                  Vis_2_not_cued_onsets)
 
 
 def get_selected_trials(behaviour_matrix):
 
     """
     Stable Trials
-    Visual_Context_Vis_1_Stable - correct, in stable block, not first in block
-    Odour_Context_Vis_2_Stable - correct, in stable block, not first in block
-    Visual_Context_Vis_1_Stable - correct, in stable block, not first in block, ignored irrel
-    Odour_Context_Vis_2_Stable - correct, in stable block, not first in block, ignored irrel
+    Odour_Context_Odour_1_Stable - correct, in stable block, not first in block
+    Odour_Context_Odour_2_Stable - correct, in stable block, not first in block
+    Visual_Context_Odour_1_Stable - correct, in stable block, not first in block, ignored irrel
+    Visual_Context_Odour_2_Stable - correct, in stable block, not first in block, ignored irrel
 
     Absence of Expected Odour
-    Perfect Switch Trials  – first in visual block, vis 1 irrel, miss, next trial correct
-    Odour_Expected_Present – Odour 2, correct, preceeded by irrel, ignore irrel
-    Odour_Not_Expected_Absent – visual block, end of vis 2, correct,
-    Odour_Expected_Absent - first in visual block, vis 1, miss
+    Visual_Expected_Present – Odour 2, correct, preceeded by irrel, ignore irrel
+    Visual_Not_Expected_Absent – visual block, end of vis 2, correct,
+    Visual_Expected_Absent - first in visual block, vis 1, miss
+    Perfect_Switch_Trials  – first in odour block, odour 1 miss, next trial correct
+    Miss_Switch_Trials - first in odour block, odour 1 miss, miss, next trial incorrect
 
-    Cued v Non-Cued Odour
-    odour_1_cued - Odour 1 - correct - in stable block - preceeded by irrel
-    odour_2_cued - Odour 2 - correct - in stable block - preceeded by irrel
-    odour_1_not_cued - Odour 2 - correct - in stable block - not preceeded by irrel
-    odour_2_not_cued - Odour 2 - correct - in stable block - not preceeded by irrel
+    Cued v Non-Cued Visual
+    Vis_1_cued - Visual 1 - correct - in stable block - preceeded by irrel
+    Vis_2_cued - Visual 2 - correct - in stable block - preceeded by irrel
+    Vis_1_not_cued - Visual 2 - correct - in stable block - not preceeded by irrel
+    Vis_2_not_cued - Visual 2 - correct - in stable block - not preceeded by irrel
 
-    miss_switch_trials - first in visual block, vis 1 irrel, miss, next trial incorrect
     """
 
     # Get Selected Trials
-    visual_context_stable_vis_1_trials = []
-    visual_context_stable_vis_2_trials = []
-    odour_context_stable_vis_1_trials = []
-    odour_context_stable_vis_2_trials = []
+    Odour_Context_Odour_1_Stable_trials = []
+    Odour_Context_Odour_2_Stable_trials = []
+    Visual_Context_Odour_1_Stable_trials = []
+    Visual_Context_Odour_2_Stable_trials = []
 
-    perfect_transition_trials = []
-    odour_expected_absent_trials = []
-    odour_expected_present_trials = []
-    odour_not_expected_not_present_trials = []
-    miss_transition_trials = []
+    Visual_Expected_Absent_trials = []
+    Visual_Expected_Present_trials = []
+    Visual_Not_Expected_Absent_trials = []
+    Perfect_Switch_Trials_trials = []
+    Miss_Switch_Trials = []
 
-    odour_1_cued = []
-    odour_2_cued = []
-    odour_1_not_cued = []
-    odour_2_not_cued = []
+    Vis_1_cued_trials = []
+    Vis_2_cued_trials = []
+    Vis_1_not_cued_trials = []
+    Vis_2_not_cued_trials = []
 
-    first_in_block_list = []
-
+    # Iterate Through Each Trial
     number_of_trials = np.shape(behaviour_matrix)[0]
-
     for trial_index in range(number_of_trials):
 
         trial_is_correct    = behaviour_matrix[trial_index][3]
@@ -956,88 +903,102 @@ def get_selected_trials(behaviour_matrix):
         ignore_irrel        = behaviour_matrix[trial_index][7]
         preeceeded_by_irrel = behaviour_matrix[trial_index][5]
 
+
         # Check If Trial Is Stable
-        if trial_is_correct and ignore_irrel and in_stable_window and not first_in_block:
+        if trial_is_correct and in_stable_window and not first_in_block:
 
-            if trial_type == 1:
-                visual_context_stable_vis_1_trials.append(trial_index)
-            elif trial_type == 2:
-                visual_context_stable_vis_2_trials.append(trial_index)
+            # If We Are In Odour Block
+            if trial_type == 3:
+                Odour_Context_Odour_1_Stable_trials.append(trial_index)
 
-            elif trial_type == 3 or trial_type == 4:
-                irrel_type = behaviour_matrix[trial_index][6]
+            elif trial_type == 4:
+                Odour_Context_Odour_2_Stable_trials.append(trial_index)
 
-                if irrel_type == 1:
-                    odour_context_stable_vis_1_trials.append(trial_index)
-                elif irrel_type == 2:
-                    odour_context_stable_vis_2_trials.append(trial_index)
+            # If We Are In Visual Block
+            elif trial_type == 1 or trial_type == 2:
+
+                # Check We Also Ignored The Odour
+                if ignore_irrel:
+                    irrel_type = behaviour_matrix[trial_index][6]
+
+                    if irrel_type == 3:
+                        Visual_Context_Odour_1_Stable_trials.append(trial_index)
+                    elif irrel_type == 4:
+                        Visual_Context_Odour_2_Stable_trials.append(trial_index)
 
 
         # Check If Trial is A Perfect Transition Trial
-        # visual block - vi 1
-        # first in block
-        # miss
-        # next trial correct
-        if trial_type == 1 and first_in_block:
+        # Odour block
+        # Odour 1
+        # First in block
+        # Miss
+        # Next trial correct
+        if trial_type == 3 or trial_type == 4:
 
-            if trial_index < number_of_trials-1:
+            if first_in_block:
 
-                following_trial_correct = behaviour_matrix[trial_index + 1][3]
+                Visual_Expected_Absent_trials.append(trial_index)
 
-                if not trial_is_correct:
+                if trial_index < number_of_trials-1:
 
-                    odour_expected_absent_trials.append(trial_index)
+                    following_trial_correct = behaviour_matrix[trial_index + 1][3]
 
-                    if following_trial_correct:
-                        perfect_transition_trials.append(trial_index)
-
-                    if not following_trial_correct:
-                        miss_transition_trials.append(trial_index)
+                    if not trial_is_correct:
 
 
+                        if following_trial_correct:
+                            Perfect_Switch_Trials_trials.append(trial_index)
 
-        # Check If Is Odour Expected, Present
-        # Odour 2, correct, stable, preceeded by irrel, ignore irrel, not first in block
-        if trial_type == 4 and trial_is_correct and in_stable_window and preeceeded_by_irrel and ignore_irrel and not first_in_block:
-            odour_expected_present_trials.append(trial_index)
+                        if not following_trial_correct:
+                            Miss_Switch_Trials.append(trial_index)
 
-        # Check If odour_not_expected_not_present_trials
-        # visual block - vis 2, correct,
-        if trial_type == 2 and trial_is_correct:
-            odour_not_expected_not_present_trials.append(trial_index)
+
+        # Check If Is Visual Expected and Present
+        # Visual 2, correct, stable, preceeded by irrel, ignore irrel, not first in block
+        if trial_type == 2 and trial_is_correct and not first_in_block:
+            print("Potential Correct Visual BLock Trial")
+            print(preeceeded_by_irrel)
+            if preeceeded_by_irrel and ignore_irrel:
+                print("Ignored Irrel")
+                Visual_Expected_Present_trials.append(trial_index)
+
+        # Check If Visual Not Expected Not Present
+        # Odour block - Odour 2 correct
+        if trial_type == 4 and trial_is_correct:
+            Visual_Not_Expected_Absent_trials.append(trial_index)
 
         # Check If Cued
-        if trial_type == 3 or trial_type == 4 and trial_is_correct and ignore_irrel and in_stable_window:
+        if trial_type == 1 or trial_type == 2 and trial_is_correct and ignore_irrel and in_stable_window:
 
-            if trial_type == 3 and preeceeded_by_irrel:
-                odour_1_cued.append(trial_index)
+            if trial_type == 1 and preeceeded_by_irrel:
+                Vis_1_cued_trials.append(trial_index)
 
-            if trial_type == 4 and preeceeded_by_irrel:
-                odour_2_cued.append(trial_index)
+            if trial_type == 2 and preeceeded_by_irrel:
+                Vis_2_cued_trials.append(trial_index)
 
-            if trial_type == 3 and not preeceeded_by_irrel:
-                odour_1_not_cued.append(trial_index)
+            if trial_type == 1 and not preeceeded_by_irrel:
+                Vis_1_not_cued_trials.append(trial_index)
 
-            if trial_type == 4 and not preeceeded_by_irrel:
-                odour_2_not_cued.append(trial_index)
+            if trial_type == 2 and not preeceeded_by_irrel:
+                Vis_2_not_cued_trials.append(trial_index)
 
     selected_trials_list = [
-                            visual_context_stable_vis_1_trials,
-                            visual_context_stable_vis_2_trials,
-                            odour_context_stable_vis_1_trials,
-                            odour_context_stable_vis_2_trials,
+        Odour_Context_Odour_1_Stable_trials,
+        Odour_Context_Odour_2_Stable_trials,
+        Visual_Context_Odour_1_Stable_trials,
+        Visual_Context_Odour_2_Stable_trials,
 
-                            perfect_transition_trials,
-                            odour_expected_present_trials,
-                            odour_not_expected_not_present_trials,
+        Visual_Expected_Absent_trials,
+        Visual_Expected_Present_trials,
+        Visual_Not_Expected_Absent_trials,
+        Perfect_Switch_Trials_trials,
+        Miss_Switch_Trials,
 
-                            odour_1_cued,
-                            odour_2_cued,
-                            odour_1_not_cued,
-                            odour_2_not_cued,
-
-                            miss_transition_trials,
-                            odour_expected_absent_trials]
+        Vis_1_cued_trials,
+        Vis_2_cued_trials,
+        Vis_1_not_cued_trials,
+        Vis_2_not_cued_trials,
+    ]
 
     return selected_trials_list
 
@@ -1073,66 +1034,6 @@ def get_step_onsets_photodiode(trace, threshold=1, window=10):
     return onset_times, onset_line
 
 
-def add_frame_onsets(onsets_dictionary, trial_matrix):
-
-    """
-    0 trial_index = int, index of trial
-    1 trial_type = 1 - rewarded visual, 2 - unrewarded visual, 3 - rewarded odour, 4 - unrewarded odour
-    2 lick = 1- lick, 0 - no lick
-    3 correct = 1 - correct, 0 - incorrect
-    4 rewarded = 1- yes, 0 - no
-    5 preeceded_by_irrel = 0 - no, 1 - yes
-    6 irrel_type = 1 - rewarded grating, 2 - unrearded grating
-    7 ignore_irrel = 0 - licked to irrel, 1 - ignored irrel, nan - no irrel,
-    8 block_number = int, index of block
-    9 first_in_block = 1 - yes, 2- no
-    10 in_block_of_stable_performance = 1 - yes, 2 - no
-    11 onset = float onset of major stimuli
-    12 stimuli_offset = float offset of major stimuli
-    13 irrel_onset = float onset of any irrel stimuli, nan = no irrel stimuli
-    14 irrel_offset = float offset of any irrel stimuli, nan = no irrel stimuli
-    15 trial_end = float end of trial
-    16 Photodiode Onset = Adjusted Visual stimuli onset to when the photodiode detects the stimulus
-    17 Photodiode Offset = Adjusted Visual Stimuli Offset to when the photodiode detects the stimulus
-    18 Onset closest Frame
-    19 Offset Closest Frame
-    20 Irrel Onset Closest Frame
-    21 Irrel Offset Closest Frame
-    """
-
-    # Load Frame Onsets
-    frame_onsets = onsets_dictionary['frame_onsets']
-
-    number_of_trials = np.shape(trial_matrix)[0]
-    for trial_index in range(number_of_trials):
-        trial = trial_matrix[trial_index]
-        stimuli_onset  = trial[11]
-        stimuli_offset = trial[12]
-        irrel_onset    = trial[13]
-        irrel_offset   = trial[14]
-
-        # Get Frames For Each Stimuli Category
-        stimuli_onset_frame = get_single_nearest_frame(stimuli_onset, frame_onsets)
-        stimuli_offset_frame = get_single_nearest_frame(stimuli_offset, frame_onsets)
-
-        if np.isnan(irrel_onset):
-            irrel_onset_frame = None
-        else:
-            print("Irrel onset", irrel_onset)
-            irrel_onset_frame = get_single_nearest_frame(irrel_onset, frame_onsets)
-
-        if  np.isnan(irrel_offset):
-            irrel_offset_frame = None
-        else:
-            print("Irrel offset", irrel_offset)
-            irrel_offset_frame = get_single_nearest_frame(irrel_offset, frame_onsets)
-
-        trial_matrix[trial_index, 18] = stimuli_onset_frame
-        trial_matrix[trial_index, 19] = stimuli_offset_frame
-        trial_matrix[trial_index, 20] = irrel_onset_frame
-        trial_matrix[trial_index, 21] = irrel_offset_frame
-
-    return trial_matrix
 
 def create_behaviour_matrix(base_directory, behaviour_only=False):
 
@@ -1140,8 +1041,11 @@ def create_behaviour_matrix(base_directory, behaviour_only=False):
     ai_filename = get_ai_filename(base_directory)
 
     # Load Lick Threshold
-    lick_threshold = np.load(os.path.join(base_directory, "Lick_Threshold.npy"))
+    #lick_threshold = np.load(os.path.join(base_directory, "Lick_Threshold.npy"))
+    lick_threshold = 0.5
+
     print("Lick Threshold : ", lick_threshold)
+
 
     # Create Save Directory
     save_directory = os.path.join(base_directory, "Stimuli_Onsets")
@@ -1149,14 +1053,31 @@ def create_behaviour_matrix(base_directory, behaviour_only=False):
         os.mkdir(save_directory)
 
     # Get Trace and Onsets Dictionary
-    onsets_dictionary, traces_dictionary = extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=lick_threshold, visualise_lick_threshold=False)
+    onsets_dictionary, traces_dictionary = extract_onsets(base_directory, ai_filename, save_directory, lick_threshold=lick_threshold, visualise_lick_threshold=True)
+
+    """
+    onsets_dictionary ={"vis_1_onsets":vis_1_onsets,
+                        "vis_2_onsets":vis_2_onsets,
+                        "odour_1_onsets":odour_1_onsets,
+                        "odour_2_onsets":odour_2_onsets,
+                        "lick_onsets":lick_onsets,
+                        "reward_onsets":reward_onsets,
+                        "vis_context_odour_1_onsets":vis_context_odour_1_onsets,
+                        "vis_context_odour_2_onsets":vis_context_odour_2_onsets,
+                        "odour_context_odour_1_onsets":odour_context_odour_1_onsets,
+                        "odour_context_odour_2_onsets":odour_context_odour_2_onsets,
+                        "frame_onsets":frame_onsets,
+                        "trial_ends":end_onsets,
+                        "photodiode_onsets":photodiode_onsets}
+    """
+
 
     # Create Trial Onsets List
-    vis_context_vis_1_onsets = onsets_dictionary["vis_context_vis_1_onsets"]
-    vis_context_vis_2_onsets = onsets_dictionary["vis_context_vis_2_onsets"]
-    odour_1_onsets = onsets_dictionary["odour_1_onsets"]
-    odour_2_onsets = onsets_dictionary["odour_2_onsets"]
-    trial_onsets = vis_context_vis_1_onsets + vis_context_vis_2_onsets + odour_1_onsets + odour_2_onsets
+    odour_context_odour_1_onsets = onsets_dictionary["odour_context_odour_1_onsets"]
+    odour_context_odour_2_onsets = onsets_dictionary["odour_context_odour_2_onsets"]
+    vis_1_onsets = onsets_dictionary["vis_1_onsets"]
+    vis_2_onsets = onsets_dictionary["vis_2_onsets"]
+    trial_onsets = odour_context_odour_1_onsets + odour_context_odour_2_onsets + vis_1_onsets + vis_2_onsets
     trial_onsets.sort()
 
     # Classify Trials
@@ -1172,8 +1093,8 @@ def create_behaviour_matrix(base_directory, behaviour_only=False):
     block_boundaries, block_types = get_block_boudaries(onsets_dictionary)
     trial_matrix = add_block_boundaries(trial_matrix, block_boundaries)
 
-    # Get Stable Windows
-    stable_windows = Get_Stable_Windows.get_stable_windows(trial_matrix)
+    # Get Stable Windows - To Do
+    stable_windows = Get_Stable_Windows_Mirror.get_stable_windows(trial_matrix)
     trial_matrix = add_stable_windows(trial_matrix, stable_windows)
 
     # Get Selected Trials
@@ -1187,7 +1108,6 @@ def create_behaviour_matrix(base_directory, behaviour_only=False):
 
     # Save Trials
     if not behaviour_only:
-        trial_matrix = add_frame_onsets(onsets_dictionary, trial_matrix)
         save_onsets(base_directory, trial_matrix, selected_trials, onsets_dictionary, save_directory, photodiode_onsets)
 
     # Plot Behaviour Matrix
@@ -1198,15 +1118,11 @@ def create_behaviour_matrix(base_directory, behaviour_only=False):
 
 
 
-session_list = [
-    "/media/matthew/Expansion/Widefield_Analysis/NXAK16.1B/2021_07_08_Transition_Imaging",
-    "/media/matthew/Expansion/Widefield_Analysis/NXAK4.1A/2021_04_12_Transition_Imaging",
-    "/media/matthew/Expansion/Widefield_Analysis/NXAK20.1B/2021_11_22_Transition_Imaging",
-    "/media/matthew/Expansion/Widefield_Analysis/NXAK24.1C/2021_11_10_Transition_Imaging",
-    ]
 
-
-session_list = [r"/media/matthew/External_Harddrive_1/Processed_Widefield_Data/NRXN78.1D/2020_12_07_Switching_Imaging"]
+session_list = ["/media/matthew/External_Harddrive_1/Processed_Widefield_Data/Beverly/2022_05_16_Mirror_Imaging",
+                "/media/matthew/External_Harddrive_1/Processed_Widefield_Data/Beverly/2022_05_18_Mirror_Imaging",
+                "/media/matthew/External_Harddrive_1/Processed_Widefield_Data/Beverly/2022_05_23_mirror_imaging",
+                "/media/matthew/External_Harddrive_1/Processed_Widefield_Data/Beverly/2022_05_27_mirror_imaging"]
 
 for session in session_list:
     create_behaviour_matrix(session, behaviour_only=False)

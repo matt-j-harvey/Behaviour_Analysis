@@ -1,7 +1,11 @@
 import numpy as np
 import os
 
-def save_behaviour_matrix_as_svd(behaviour_matrix, save_directory):
+def save_behaviour_matrix_as_csv(base_directory):
+
+    # Load Behaviour Matrix
+    behaviour_matrix = np.load(os.path.join(base_directory, "Stimuli_Onsets", "Behaviour_Matrix.npy"), allow_pickle=True)
+
 
     header = [
         "0 trial_index," 
@@ -22,13 +26,15 @@ def save_behaviour_matrix_as_svd(behaviour_matrix, save_directory):
         "15 trial_end,"
         "16 Photodiode Onset,"
         "17 Photodiode Offset,"
+        "18 Onset closest Frame,"
+        "19 Offset Closest Frame,"
+        "20 Irrel Onset Closest Frame,"
+        "21 Irrel Offset Closest Frame,"
+        "22 Lick Onset,"
+        "23 Reaction Time,"
         ]
     header = " ".join(header)
 
-    np.savetxt(os.path.join(save_directory, "Behaviour_Matrix.csv"), behaviour_matrix, delimiter=",", fmt="%.2f",
-               header=header, comments="")
+    np.savetxt(os.path.join(base_directory, "Behaviour_Matrix.csv"), behaviour_matrix, delimiter=",", fmt="%s", header=header, comments="",  newline='\n')
 
 
-base_directory = r"/media/matthew/Seagate Expansion Drive2/1TB Contents/Behaviour_Analysis/Controls/4.1B/2021_04_10_Transition_Imaging"
-behaviour_matrix = np.load(os.path.join(base_directory, "Stimuli_Onsets", "Behaviour_Matrix.npy"), allow_pickle=True)
-save_behaviour_matrix_as_svd(behaviour_matrix, base_directory)
